@@ -49,7 +49,7 @@ class BankOfCordaRPCClientTest {
                     1000.DOLLARS, BIG_CORP_PARTY_REF,
                     nodeBigCorporation.nodeInfo.legalIdentity,
                     anonymous,
-                    nodeBankOfCorda.nodeInfo.notaryIdentity)
+                    nodeBankOfCorda.nodeInfo.notaryIdentity).returnValue.getOrThrow()
 
             // Check Bank of Corda Vault Updates
             vaultUpdatesBoc.expectEvents {
