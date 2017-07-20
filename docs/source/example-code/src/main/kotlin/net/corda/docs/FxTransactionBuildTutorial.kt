@@ -164,7 +164,6 @@ class ForeignExchangeFlow(val localRequest: FxRequest, val remoteRequest: FxRequ
 
         // register the identities presented by the counterparty
         theirIdentitites.forEach { it ->
-            logger.error("Registering anonymous identity ${it.party.owningKey.toStringShort()}")
             serviceHub.identityService.verifyAndRegisterIdentity(it)
         }
 
