@@ -59,7 +59,6 @@ object TwoPartyTradeFlow {
     @CordaSerializable
     data class SellerTradeInfo(
             val assetForSale: StateAndRef<OwnableState>,
-            val assetForSaleIdentity: PartyAndCertificate?,
             val price: Amount<Currency>,
             val payToIdentity: PartyAndCertificate
     )
@@ -86,12 +85,8 @@ object TwoPartyTradeFlow {
         @Suspendable
         override fun call(): SignedTransaction {
             progressTracker.currentStep = AWAITING_PROPOSAL
-            val identity = if (assetToSell.state.data.owner == serviceHub.myInfo.legalIdentity)
-                null
-            else
-                serviceHub.identityService.certificateFromKey(assetToSell.state.data.owner.owningKey) ?: throw IllegalArgumentException("Asset to sell is owned by an unknown identity")
             // Make the first message we'll send to kick off the flow.
-            val hello = SellerTradeInfo(assetToSell, identity, price, me)
+            val hello = SellerTradeInfo(assetToSell, price, me)
             // What we get back from the other side is a transaction that *might* be valid and acceptable to us,
             // but we must check it out thoroughly before we sign!
             // SendTransactionFlow allows otherParty to access our data to resolve the transaction.
@@ -178,9 +173,8 @@ object TwoPartyTradeFlow {
             // Send the signed transaction to the seller, who must then sign it themselves and commit
             // it to the ledger by sending it to the notary.
             progressTracker.currentStep = COLLECTING_SIGNATURES
-            val inputKeys = (cashSigningPubKeys + tradeRequest.assetForSaleIdentity?.party?.owningKey).filterNotNull()
             val anonymousIdentities: Map<Party, AnonymousParty> = identities.map { Pair(it.key, it.value.party.anonymise()) }.toMap()
-            val twiceSignedTx = subFlow(CollectSignaturesFlow(partSignedTx, anonymousIdentities, inputKeys, COLLECTING_SIGNATURES.childProgressTracker()))
+            val twiceSignedTx = subFlow(CollectSignaturesFlow(partSignedTx, anonymousIdentities, cashSigningPubKeys, COLLECTING_SIGNATURES.childProgressTracker()))
 
             // Notarise and record the transaction.
             progressTracker.currentStep = RECORDING
@@ -199,12 +193,8 @@ object TwoPartyTradeFlow {
                 // Perform KYC checks on the asset we're being sold. The asset must either be owned by the well known
                 // identity of the counterparty, or we must be able to prove the owner is a confidential identity of
                 // the counterparty.
-                if (it.assetForSaleIdentity == null) {
-                    require(asset.owner == otherParty)
-                } else {
-                    serviceHub.identityService.verifyAndRegisterIdentity(it.assetForSaleIdentity)
-                    require(asset.owner == it.assetForSaleIdentity.party) { "KYC: Owner of the asset being sold must be the seller" }
-                }
+                val assetForSaleIdentity = serviceHub.identityService.partyFromAnonymous(asset.owner)
+                require(assetForSaleIdentity == otherParty)
 
                 // Register the identity we're about to send payment to. This shouldn't be the same as the asset owner
                 // identity, so that anonymity is enforced.
