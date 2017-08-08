@@ -8,8 +8,8 @@ import net.corda.core.contracts.withoutIssuer
 import net.corda.core.contracts.*
 import net.corda.core.flows.*
 import net.corda.core.identity.AnonymousParty
-import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.identity.Party
+import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.node.NodeInfo
 import net.corda.core.serialization.CordaSerializable
 import net.corda.core.transactions.SignedTransaction
@@ -173,8 +173,7 @@ object TwoPartyTradeFlow {
             // Send the signed transaction to the seller, who must then sign it themselves and commit
             // it to the ledger by sending it to the notary.
             progressTracker.currentStep = COLLECTING_SIGNATURES
-            val anonymousIdentities: Map<Party, AnonymousParty> = identities.map { Pair(it.key, it.value.party.anonymise()) }.toMap()
-            val twiceSignedTx = subFlow(CollectSignaturesFlow(partSignedTx, anonymousIdentities, cashSigningPubKeys, COLLECTING_SIGNATURES.childProgressTracker()))
+            val twiceSignedTx = subFlow(CollectSignaturesFlow(partSignedTx, identities, cashSigningPubKeys, COLLECTING_SIGNATURES.childProgressTracker()))
 
             // Notarise and record the transaction.
             progressTracker.currentStep = RECORDING
@@ -198,7 +197,8 @@ object TwoPartyTradeFlow {
 
                 // Register the identity we're about to send payment to. This shouldn't be the same as the asset owner
                 // identity, so that anonymity is enforced.
-                serviceHub.identityService.verifyAndRegisterIdentity(it.payToIdentity)
+                val wellKnownPayToIdentity = serviceHub.identityService.verifyAndRegisterIdentity(it.payToIdentity)
+                require(wellKnownPayToIdentity?.party == otherParty) { "Well known identity to pay to must match counterparty identity" }
 
                 if (it.price > acceptablePrice)
                     throw UnacceptablePriceException(it.price)
@@ -230,14 +230,13 @@ object TwoPartyTradeFlow {
 
             // TODO: Should have helper functions to do this automatically for us rather than manually
             val identities = listOf(
-                    Pair(serviceHub.myInfo.legalIdentity, buyerAnonymousIdentity),
-                    Pair(otherParty, tradeRequest.payToIdentity)
+                    Pair(serviceHub.myInfo.legalIdentity, buyerAnonymousIdentity.party.anonymise()),
+                    Pair(otherParty, tradeRequest.payToIdentity.party.anonymise())
             ).toMap()
 
             return SharedTx(tx, identities, cashSigningPubKeys)
         }
         // DOCEND 1
-
-        data class SharedTx(val tx: TransactionBuilder, val identities: Map<Party, PartyAndCertificate>, val cashSigningPubKeys: List<PublicKey>)
+        data class SharedTx(val tx: TransactionBuilder, val identities: Map<Party, AnonymousParty>, val cashSigningPubKeys: List<PublicKey>)
     }
 }
