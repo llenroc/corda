@@ -41,11 +41,11 @@ import java.util.*
 
 class ExplorerSimulation(val options: OptionSet) {
     private val user = User("user1", "test", permissions = setOf(
-            startFlowPermission<CashPaymentFlow>()
+            startFlowPermission<CashPaymentFlow.Initiate>()
     ))
     private val manager = User("manager", "test", permissions = setOf(
             startFlowPermission<CashIssueFlow>(),
-            startFlowPermission<CashPaymentFlow>(),
+            startFlowPermission<CashPaymentFlow.Initiate>(),
             startFlowPermission<CashExitFlow>())
     )
 
@@ -165,7 +165,7 @@ class ExplorerSimulation(val options: OptionSet) {
             // Party pay requests.
             eventGenerator.moveCashGenerator.combine(Generator.pickOne(parties)) { request, (party, rpc) ->
                 println("${Instant.now()} [$i] SENDING ${request.amount} from $party to ${request.recipient}")
-                rpc.startFlow(::CashPaymentFlow, request).log(i, party.name.toString())
+                rpc.startFlow(CashPaymentFlow::Initiate, request).log(i, party.name.toString())
             }.generate(SplittableRandom())
         }
         println("Simulation completed")
@@ -187,7 +187,7 @@ class ExplorerSimulation(val options: OptionSet) {
                 for ((currency, issuer) in issuers) {
                     val amount = Amount(1_000_000, currency)
                     issuer.startFlow(::CashIssueFlow, amount, OpaqueBytes(ByteArray(1, { ref.toByte() })), notaryNode.nodeInfo.notaryIdentity).returnValue.getOrThrow()
-                    issuer.startFlow(::CashPaymentFlow, amount, it, anonymous)
+                    issuer.startFlow(CashPaymentFlow::Initiate, amount, it, anonymous)
                 }
             }
         }
