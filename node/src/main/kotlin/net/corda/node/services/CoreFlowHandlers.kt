@@ -5,7 +5,9 @@ import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.UpgradeCommand
 import net.corda.core.contracts.UpgradedContract
 import net.corda.core.contracts.requireThat
+import net.corda.core.crypto.toStringShort
 import net.corda.core.flows.*
+import net.corda.core.identity.AbstractParty
 import net.corda.core.identity.AnonymousParty
 import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.identity.Party
@@ -75,6 +77,10 @@ class ContractUpgradeHandler(otherSide: Party) : AbstractStateReplacementFlow.Ac
     }
 }
 
+/**
+ * Handle an offer to provide proof of identity (in the form of certificate paths) for confidential identities which
+ * we do not yet know about.
+ */
 class IdentitySyncHandler(val otherSide: Party) : FlowLogic<Unit>() {
     companion object {
         object RECEIVING_IDENTITIES : ProgressTracker.Step("Receiving confidential identities")
@@ -86,10 +92,18 @@ class IdentitySyncHandler(val otherSide: Party) : FlowLogic<Unit>() {
     @Suspendable
     override fun call(): Unit {
         progressTracker.currentStep = RECEIVING_IDENTITIES
-        val allIdentities = receive<List<AnonymousParty>>(otherSide).unwrap { it }
-        val unknownIdentities = allIdentities.filter { serviceHub.identityService.partyFromKey(it.owningKey) == null }
-        val missingIdentities: List<PartyAndCertificate> = sendAndReceive<List<PartyAndCertificate>>(otherSide, unknownIdentities).unwrap { it }
-        missingIdentities.forEach { identity ->
+        val allIdentities = receive<List<AbstractParty>>(otherSide).unwrap { it }
+        val unknownIdentities = allIdentities.filter { serviceHub.identityService.partyFromAnonymous(it) == null }
+        progressTracker.currentStep = RECEIVING_CERTIFICATES
+        val missingIdentities = sendAndReceive<List<PartyAndCertificate>>(otherSide, unknownIdentities)
+
+        // Batch verify the identities we've received, so we know they're all correct before we start storing them in
+        // the identity service
+        missingIdentities.unwrap { identities ->
+            identities.forEach { it.verify(serviceHub.identityService.trustAnchor) }
+            identities
+        }.forEach { identity ->
+            // Store the received confidential identities in the identity service so we have a record of which well known identity they map to.
             serviceHub.identityService.verifyAndRegisterIdentity(identity)
         }
         // Send a notice over to the remote party to indicate we've synced
