@@ -29,8 +29,8 @@ class MockNetworkMapCache(serviceHub: ServiceHub) : InMemoryNetworkMapCache(serv
     override val changed: Observable<NetworkMapCache.MapChange> = PublishSubject.create<NetworkMapCache.MapChange>()
 
     init {
-        val mockNodeA = NodeInfo(listOf(BANK_C_ADDR), BANK_C, NonEmptySet.of(BANK_C), 1)
-        val mockNodeB = NodeInfo(listOf(BANK_D_ADDR), BANK_D, NonEmptySet.of(BANK_D), 1)
+        val mockNodeA = NodeInfo(listOf(BANK_C_ADDR), NonEmptySet.of(BANK_C), 1)
+        val mockNodeB = NodeInfo(listOf(BANK_D_ADDR), NonEmptySet.of(BANK_D), 1)
         partyNodes.add(mockNodeA)
         partyNodes.add(mockNodeB)
         runWithoutMapService()

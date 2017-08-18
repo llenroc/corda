@@ -131,7 +131,7 @@ class NodeMessagingClient(override val config: NodeConfiguration,
      * Apart from the NetworkMapService this is the only other address accessible to the node outside of lookups against the NetworkMapCache.
      */
     override val myAddress: SingleMessageRecipient = if (myIdentity != null) {
-        NodeAddress.asPeer(myIdentity, advertisedAddress)
+        NodeAddress.asSingleNode(myIdentity, advertisedAddress)
     } else {
         NetworkMapAddress(advertisedAddress)
     }

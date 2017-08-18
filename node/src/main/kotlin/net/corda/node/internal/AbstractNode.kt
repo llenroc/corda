@@ -79,7 +79,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.KeyPair
 import java.security.KeyStoreException
-import java.security.PublicKey
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.sql.Connection
@@ -493,9 +492,9 @@ abstract class AbstractNode(open val configuration: NodeConfiguration,
 
     private fun makeInfo(): NodeInfo {
         val advertisedServiceEntries = makeServiceEntries()
-        val allIdentitiesSet = (advertisedServiceEntries.map { it.identity } + services.legalIdentity).toNonEmptySet()
+        val allIdentitiesSet = (advertisedServiceEntries.map { it.identity } + services.legalIdentity).toNonEmptySet() // TODO Will we keep service identities here, for example notaries?
         val addresses = myAddresses() // TODO There is no support for multiple IP addresses yet.
-        return NodeInfo(addresses, services.legalIdentity, allIdentitiesSet, platformVersion, advertisedServiceEntries, findMyLocation())
+        return NodeInfo(addresses, allIdentitiesSet, platformVersion, advertisedServiceEntries, findMyLocation())
     }
 
     /**

@@ -63,7 +63,7 @@ abstract class ArtemisMessagingComponent : SingletonSerializeAsToken() {
     @CordaSerializable
     data class NodeAddress(override val queueName: String, override val hostAndPort: NetworkHostAndPort) : ArtemisPeerAddress {
         companion object {
-            fun asPeer(peerIdentity: PublicKey, hostAndPort: NetworkHostAndPort): NodeAddress { // TODO change name of function
+            fun asSingleNode(peerIdentity: PublicKey, hostAndPort: NetworkHostAndPort): NodeAddress {
                 return NodeAddress("$PEERS_PREFIX${peerIdentity.toBase58String()}", hostAndPort)
             }
         }
@@ -106,7 +106,7 @@ abstract class ArtemisMessagingComponent : SingletonSerializeAsToken() {
         return if (party.name == netMapName) {
             NetworkMapAddress(address)
         } else {
-            NodeAddress.asPeer(party.owningKey, address) // It also takes care of services nodes treated as peer nodes
+            NodeAddress.asSingleNode(party.owningKey, address) // It also takes care of services nodes treated as peer nodes
         }
     }
 }

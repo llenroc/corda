@@ -4,8 +4,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
-import net.corda.client.jfx.utils.firstOrDefault
-import net.corda.client.jfx.utils.firstOrNullObservable
 import net.corda.client.jfx.utils.fold
 import net.corda.client.jfx.utils.map
 import net.corda.core.crypto.keys

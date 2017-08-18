@@ -82,7 +82,7 @@ open class MockServices(vararg val keys: KeyPair) : ServiceHub {
     override val legalIdentity = getTestPartyAndCertificate(MEGA_CORP.name, key.public)
     override val myInfo: NodeInfo get() {
         val identity = legalIdentity
-        return NodeInfo(emptyList(), identity, NonEmptySet.of(identity), 1)
+        return NodeInfo(emptyList(), NonEmptySet.of(identity), 1)
     }
     override val transactionVerifierService: TransactionVerifierService get() = InMemoryTransactionVerifierService(2)
 

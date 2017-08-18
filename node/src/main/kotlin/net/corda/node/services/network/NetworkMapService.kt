@@ -143,7 +143,6 @@ abstract class AbstractNetworkMapService(services: ServiceHubInternal,
         private val logger = loggerFor<AbstractNetworkMapService>()
     }
 
-    // TODO it will be problematic, we loose index
     protected abstract val nodeRegistrations: MutableMap<PartyAndCertificate, NodeRegistrationInfo>
 
     // Map from subscriber address, to most recently acknowledged update map version.
@@ -245,8 +244,10 @@ abstract class AbstractNetworkMapService(services: ServiceHubInternal,
         } catch (e: SignatureException) {
             return RegistrationResponse("Invalid signature on request")
         }
-
         val node = change.node
+        // Get identity from signature on node's registration and use it as an index.
+        val identity = node.legalIdentitiesAndCerts.singleOrNull { request.wireReg.sig.by == it.owningKey }
+        identity ?: return RegistrationResponse("Key from signature on the node registration wasn't found in NodeInfo")
 
         if (node.platformVersion < minimumPlatformVersion) {
             return RegistrationResponse("Minimum platform version requirement not met: $minimumPlatformVersion")
@@ -256,7 +257,7 @@ abstract class AbstractNetworkMapService(services: ServiceHubInternal,
         // in on different threads, there is no risk of a race condition while checking
         // sequence numbers.
         val registrationInfo = try {
-            nodeRegistrations.compute(node.legalIdentityAndCert2) { _, existing: NodeRegistrationInfo? ->
+            nodeRegistrations.compute(identity) { _, existing: NodeRegistrationInfo? ->
                 require(!((existing == null || existing.reg.type == REMOVE) && change.type == REMOVE)) {
                     "Attempting to de-register unknown node"
                 }

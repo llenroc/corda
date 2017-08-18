@@ -42,6 +42,7 @@ import kotlin.collections.ArrayList
  * than the identity service directly, as this avoids problems with service start sequence (network map cache
  * and identity services depend on each other). Should always be provided except for unit test cases.
  */
+// TODO Most of these functions are already rewritten to database queries in PR: 1135
 @ThreadSafe
 open class InMemoryNetworkMapCache(private val serviceHub: ServiceHub?) : SingletonSerializeAsToken(), NetworkMapCacheInternal {
     companion object {
@@ -126,7 +127,7 @@ open class InMemoryNetworkMapCache(private val serviceHub: ServiceHub?) : Single
 
     override fun addNode(node: NodeInfo) {
         synchronized(_changed) {
-            // TODO It is bad solution complexity wise, we lost good index for NodeInfos.
+            // TODO It is bad solution complexity wise, but it's rewritten to db query in different PR.
             val previousIndex = partyNodes.indexOfFirst { it.legalIdentitiesAndCerts == node.legalIdentitiesAndCerts }
             if (previousIndex == -1) {
                 partyNodes.add(node)

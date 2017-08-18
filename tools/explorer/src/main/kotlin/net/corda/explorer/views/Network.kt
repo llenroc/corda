@@ -136,7 +136,7 @@ class Network : CordaView() {
         }
 
         val button = node.renderButton(mapLabel)
-        if (myIdentity.value in node.legalIdentitiesAndCerts.map { it.party }) { // TODO Main legal identities shouldn't double.
+        if (myIdentity.value in node.legalIdentitiesAndCerts.map { it.party }) {
             // It has to be a copy if we want to have notary both in notaries list and in identity (if we are looking at that particular notary node).
             myIdentityPane.apply { center = node.renderButton(mapLabel) }
             myLabel = mapLabel

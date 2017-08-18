@@ -58,6 +58,7 @@ interface NetworkMapCache {
         return partyNodes.filter { it.advertisedServices.any { it.info.type.isSubTypeOf(serviceType) } }
     }
 
+    // TODO It will be removed with services + part of these functions will get merged into database backed NetworkMapCache
     fun getPeersWithService(serviceType: ServiceType): List<ServiceEntry> {
         return partyNodes.fold(ArrayList<ServiceEntry>()) {
             acc, elem -> acc.addAll(elem.advertisedServices.filter { it.info.type.isSubTypeOf(serviceType)})

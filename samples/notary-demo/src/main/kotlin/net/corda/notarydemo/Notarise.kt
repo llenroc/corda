@@ -40,7 +40,7 @@ private class NotaryDemoClientApi(val rpc: CordaRPCOps) {
             acc.addAll(elem.legalIdentitiesAndCerts.filter { it.name == BOB.name})
             acc
         }.single().party
-    } //TODO check notarise works
+    }
 
     /** Makes calls to the node rpc to start transaction notarisation. */
     fun notarise(count: Int) {

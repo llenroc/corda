@@ -20,13 +20,11 @@ import net.corda.client.jfx.utils.unique
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.sumOrNull
 import net.corda.core.contracts.withoutIssuer
-import net.corda.core.crypto.toBase58String
 import net.corda.core.flows.FlowException
 import net.corda.core.identity.Party
 import net.corda.core.identity.PartyAndCertificate
 import net.corda.core.messaging.FlowHandle
 import net.corda.core.messaging.startFlow
-import net.corda.core.node.NodeInfo
 import net.corda.core.transactions.SignedTransaction
 import net.corda.core.utilities.getOrThrow
 import net.corda.core.utilities.OpaqueBytes
@@ -197,7 +195,7 @@ class NewTransaction : Fragment() {
         issuerLabel.visibleProperty().bind(transactionTypeCB.valueProperty().isNotNull)
         // TODO This concept should burn (after services removal...)
         issuerChoiceBox.apply {
-            items = issuers.map { it.identity.party }.unique().sorted() // TODO test
+            items = issuers.map { it.identity.party }.unique().sorted()
             converter = stringConverter { PartyNameFormatter.short.format(it.name) }
             visibleProperty().bind(transactionTypeCB.valueProperty().map { it == CashTransaction.Pay })
         }

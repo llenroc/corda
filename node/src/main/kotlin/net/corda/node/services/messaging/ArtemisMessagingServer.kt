@@ -333,7 +333,7 @@ class ArtemisMessagingServer(override val config: NodeConfiguration,
      */
     private fun updateBridgesOnNetworkChange(change: MapChange) {
         fun gatherAddresses(node: NodeInfo): Sequence<ArtemisPeerAddress> {
-            val address = node.addresses.first() // TODO Load balancing
+            val address = node.addresses.first()
             return node.legalIdentitiesAndCerts.map { getArtemisPeerAddress(it.party, address, config.networkMapService?.legalName) }.asSequence()
         }
 
@@ -493,6 +493,10 @@ private class VerifyingNettyConnector(configuration: MutableMap<String, Any>,
                         .engine()
                         .session
                 // Checks the peer name is the one we are expecting.
+                // TODO Some problems here: after introduction of multiple legal identities on the node and removal of the main one,
+                //  we run into the issue, who are we connecting to. There are some solutions to that: advertise `network identity`;
+                //  have mapping port -> identity (but, design doc says about removing SingleMessageRecipient and having just NetworkHostAndPort,
+                //  it was convenient to store that this way); SNI.
                 val peerLegalName = session.peerPrincipal.name.let(::X500Name)
                 val expectedLegalName = expectedLegalNames.singleOrNull { it == peerLegalName }
                 require(expectedLegalName != null) {
