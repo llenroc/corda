@@ -192,7 +192,6 @@ class TwoPartyTradeFlowTests {
         }
     }
 
-    @Ignore("Broken until we can persist anonymous identities over node restart")
     @Test
     fun `shutdown and restore`() {
         mockNet = MockNetwork(false)
@@ -539,11 +538,17 @@ class TwoPartyTradeFlowTests {
     private fun runBuyerAndSeller(notaryNode: MockNetwork.MockNode,
                                   sellerNode: MockNetwork.MockNode,
                                   buyerNode: MockNetwork.MockNode,
-                                  assetToSell: StateAndRef<OwnableState>): RunResult {
-        val anonymousSeller = sellerNode.services.let { serviceHub ->
-            serviceHub.keyManagementService.freshKeyAndCert(serviceHub.myInfo.legalIdentityAndCert, false)
+                                  assetToSell: StateAndRef<OwnableState>,
+                                  anonymous: Boolean = true): RunResult {
+        val anonymousSeller = if (anonymous) {
+            sellerNode.services.keyManagementService.freshKeyAndCert(sellerNode.services.myInfo.legalIdentityAndCert, false)
+        } else {
+            sellerNode.info.legalIdentityAndCert
         }
-        val buyerFlows: Observable<BuyerAcceptor> = buyerNode.registerInitiatedFlow(BuyerAcceptor::class.java)
+        val buyerFlows: Observable<out FlowLogic<*>> = if (anonymous)
+            buyerNode.registerInitiatedFlow(BuyerAcceptor::class.java)
+        else
+            buyerNode.registerInitiatedFlow(DeanonymisedBuyerAcceptor::class.java)
         val firstBuyerFiber = buyerFlows.toFuture().map { it.stateMachine }
         val seller = SellerInitiator(buyerNode.info.legalIdentity, notaryNode.info, assetToSell, 1000.DOLLARS, anonymousSeller)
         val sellerResult = sellerNode.services.startFlow(seller).resultFuture
@@ -576,7 +581,19 @@ class TwoPartyTradeFlowTests {
                 require(serviceHub.networkMapCache.isNotary(it.first)) { "${it.first} is not a notary" }
                 it
             }
-            return subFlow(Buyer(seller, notary, price, CommercialPaper.State::class.java))
+            return subFlow(Buyer(seller, notary, price, CommercialPaper.State::class.java, true))
+        }
+    }
+
+    @InitiatedBy(SellerInitiator::class)
+    class DeanonymisedBuyerAcceptor(val seller: Party) : FlowLogic<SignedTransaction>() {
+        @Suspendable
+        override fun call(): SignedTransaction {
+            val (notary, price) = receive<Pair<Party, Amount<Currency>>>(seller).unwrap {
+                require(serviceHub.networkMapCache.isNotary(it.first)) { "${it.first} is not a notary" }
+                it
+            }
+            return subFlow(Buyer(seller, notary, price, CommercialPaper.State::class.java, false))
         }
     }
 
