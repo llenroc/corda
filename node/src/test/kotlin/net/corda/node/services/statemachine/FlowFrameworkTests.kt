@@ -635,7 +635,7 @@ class FlowFrameworkTests {
         val result = node2.services.startFlow(VaultQueryFlow(stx, node1.info.legalIdentity)).resultFuture
 
         mockNet.runNetwork()
-        assertThat(result.getOrThrow()).isEmpty()
+        assertEquals(stx.tx.outRefsOfType(), result.getOrThrow())
     }
 
     @Test
