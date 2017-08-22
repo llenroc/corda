@@ -31,7 +31,6 @@ UNRELEASED
   must use ``SendTransactionFlow`` at the correct place. There is also ``ReceiveStateAndRefFlow`` and ``SendStateAndRefFlow`` for
   dealing with ``StateAndRef``s.
 
-
 * Vault query soft locking enhancements and deprecations
   * removed original ``VaultService`` ``softLockedStates` query mechanism.
   * introduced improved ``SoftLockingCondition`` filterable attribute in ``VaultQueryCriteria`` to enable specification
@@ -64,6 +63,10 @@ UNRELEASED
 
 * Moved ``:finance`` gradle project files into a ``net.corda.finance`` package namespace.
   This may require adjusting imports of Cash flow references and also of ``StartFlow`` permission in ``gradle.build`` files.
+
+* Allow storing and querying irrelevant states from the vault.
+  * Added a optional flag ``storeIrrelevantStates`` to node properties to configure vault irrelevant state retention policy.
+  * Added ``Relevancy`` to vault query criteria to allow filtering using the newly added state attribute.
 
 Milestone 14
 ------------
