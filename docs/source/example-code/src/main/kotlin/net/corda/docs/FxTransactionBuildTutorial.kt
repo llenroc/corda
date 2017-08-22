@@ -109,10 +109,10 @@ class ForeignExchangeFlow(val tradeId: String,
         } else throw IllegalArgumentException("Our identity must be one of the parties in the trade.")
 
         // Call the helper method to identify suitable inputs and make the outputs
-        val (outInputStates, ourOutputStates) = prepareOurInputsAndOutputs(serviceHub, runId.uuid, localRequest)
+        val (ourInputStates, ourOutputStates) = prepareOurInputsAndOutputs(serviceHub, runId.uuid, localRequest)
 
         // identify the notary for our states
-        val notary = outInputStates.first().state.notary
+        val notary = ourInputStates.first().state.notary
         // ensure request to other side is for a consistent notary
         val remoteRequestWithNotary = remoteRequest.copy(notary = notary)
 
