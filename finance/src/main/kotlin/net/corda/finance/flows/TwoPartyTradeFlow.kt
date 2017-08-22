@@ -94,6 +94,11 @@ object TwoPartyTradeFlow {
 
             // Verify and sign the transaction.
             progressTracker.currentStep = VERIFYING_AND_SIGNING
+
+            // Sync identities to ensure we know all of the identities involved in the transaction we're about to
+            // be asked to sign
+            subFlow(IdentitySyncFlow.Receive(otherParty))
+
             // DOCSTART 5
             val signTransactionFlow = object : SignTransactionFlow(otherParty, VERIFYING_AND_SIGNING.childProgressTracker()) {
                 override fun checkTransaction(stx: SignedTransaction) {
@@ -167,7 +172,7 @@ object TwoPartyTradeFlow {
             val partSignedTx = serviceHub.signInitialTransaction(ptx, cashSigningPubKeys)
 
             // Sync up confidential identities in the transaction with our counterparty
-            subFlow(IdentitySyncFlow(otherParty, ptx.toWireTransaction()))
+            subFlow(IdentitySyncFlow.Send(otherParty, ptx.toWireTransaction()))
 
             // Send the signed transaction to the seller, who must then sign it themselves and commit
             // it to the ledger by sending it to the notary.
