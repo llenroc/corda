@@ -13,10 +13,10 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Root level="info">
+        <Root level="trace">
             <AppenderRef ref="Console-Appender"/>
         </Root>
-        <Logger name="net.corda" level="${sys:defaultLogLevel}" additivity="false">
+        <Logger name="net.corda" level="trace" additivity="false">
             <AppenderRef ref="Console-Appender"/>
         </Logger>
         <Logger name="BasicInfo" additivity="false">

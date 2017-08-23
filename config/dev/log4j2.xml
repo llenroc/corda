@@ -49,16 +49,16 @@
     </Appenders>
 
     <Loggers>
-        <Root level="${sys:defaultLogLevel}">
-            <AppenderRef ref="Console-Appender" level="${sys:consoleLogLevel}"/>
+        <Root level="trace">
+            <AppenderRef ref="Console-Appender" level="trace"/>
             <AppenderRef ref="RollingFile-Appender" />
         </Root>
         <Logger name="BasicInfo" additivity="false">
             <AppenderRef ref="Console-Appender-Println"/>
             <AppenderRef ref="RollingFile-Appender" />
         </Logger>
-        <Logger name="org.apache.activemq.artemis.core.server" level="error" additivity="false">
-            <AppenderRef ref="RollingFile-Appender"/>
-        </Logger>
+        <!--<Logger name="org.apache.activemq.artemis.core.server" level="error" additivity="false">-->
+            <!--<AppenderRef ref="RollingFile-Appender"/>-->
+        <!--</Logger>-->
     </Loggers>
 </Configuration>

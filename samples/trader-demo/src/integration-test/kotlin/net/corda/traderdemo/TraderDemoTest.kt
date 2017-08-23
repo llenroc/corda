@@ -11,10 +11,7 @@ import net.corda.flows.CashPaymentFlow
 import net.corda.node.services.startFlowPermission
 import net.corda.node.services.transactions.SimpleNotaryService
 import net.corda.nodeapi.User
-import net.corda.testing.BOC
-import net.corda.testing.DUMMY_BANK_A
-import net.corda.testing.DUMMY_BANK_B
-import net.corda.testing.DUMMY_NOTARY
+import net.corda.testing.*
 import net.corda.testing.driver.poll
 import net.corda.testing.node.NodeBasedTest
 import net.corda.traderdemo.flow.BuyerFlow
@@ -27,6 +24,13 @@ import java.util.concurrent.Executors
 class TraderDemoTest : NodeBasedTest() {
     @Test
     fun `runs trader demo`() {
+
+        LogHelper.setLevel("+org.apache.activemq.artemis.jms")
+        LogHelper.setLevel("+org.apache.qpid")
+        LogHelper.setLevel("+proton")
+        LogHelper.setLevel("+javax.security")
+
+
         val demoUser = User("demo", "demo", setOf(startFlowPermission<SellerFlow>()))
         val bankUser = User("user1", "test", permissions = setOf(
                 startFlowPermission<CashIssueFlow>(),

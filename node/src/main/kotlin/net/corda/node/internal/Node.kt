@@ -158,6 +158,7 @@ open class Node(override val configuration: FullNodeConfiguration,
                 database,
                 networkMapRegistrationFuture,
                 services.monitoringService,
+                services.networkMapCache,
                 advertisedAddress)
     }
 

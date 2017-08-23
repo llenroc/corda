@@ -9,6 +9,7 @@ import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.MessageRecipients
 import net.corda.core.messaging.RPCOps
 import net.corda.core.messaging.SingleMessageRecipient
+import net.corda.core.node.services.NetworkMapCache
 import net.corda.core.node.services.PartyInfo
 import net.corda.core.node.services.TransactionVerifierService
 import net.corda.core.transactions.LedgerTransaction
@@ -75,6 +76,7 @@ class NodeMessagingClient(override val config: NodeConfiguration,
                           val database: CordaPersistence,
                           val networkMapRegistrationFuture: CordaFuture<Unit>,
                           val monitoringService: MonitoringService,
+                          val networkMap: NetworkMapCache,
                           advertisedAddress: NetworkHostAndPort = serverAddress
 ) : ArtemisMessagingComponent(), MessagingService {
     companion object {
@@ -84,11 +86,11 @@ class NodeMessagingClient(override val config: NodeConfiguration,
         // We should probably try to unify our notion of "topic" (really, just a string that identifies an endpoint
         // that will handle messages, like a URL) with the terminology used by underlying MQ libraries, to avoid
         // confusion.
-        private val topicProperty = SimpleString("platform-topic")
-        private val sessionIdProperty = SimpleString("session-id")
-        private val cordaVendorProperty = SimpleString("corda-vendor")
-        private val releaseVersionProperty = SimpleString("release-version")
-        private val platformVersionProperty = SimpleString("platform-version")
+        private val topicProperty = SimpleString("platform_topic")
+        private val sessionIdProperty = SimpleString("session_id")
+        private val cordaVendorProperty = SimpleString("corda_vendor")
+        private val releaseVersionProperty = SimpleString("release_version")
+        private val platformVersionProperty = SimpleString("platform_version")
         private val amqDelayMillis = System.getProperty("amq.delivery.delay.ms", "0").toInt()
         private val verifierResponseAddress = "$VERIFICATION_RESPONSES_QUEUE_NAME_PREFIX.${random63BitValue()}"
 
@@ -103,6 +105,7 @@ class NodeMessagingClient(override val config: NodeConfiguration,
         var session: ClientSession? = null
         var sessionFactory: ClientSessionFactory? = null
         var rpcServer: RPCServer? = null
+        var bridgeManager: BridgeManager? = null
         // Consumer for inbound client RPC messages.
         var verificationResponseConsumer: ClientConsumer? = null
     }
@@ -195,6 +198,9 @@ class NodeMessagingClient(override val config: NodeConfiguration,
             }, {})
 
             rpcServer = RPCServer(rpcOps, NODE_USER, NODE_USER, locator, userService, config.myLegalName)
+
+//            bridgeManager = BridgeManager(locator, serverAddress, NODE_USER, NODE_USER, networkMap, config)
+//            bridgeManager!!.start()
 
             fun checkVerifierCount() {
                 if (session.queueQuery(SimpleString(VERIFICATION_REQUESTS_QUEUE_NAME)).consumerCount == 0) {
@@ -324,7 +330,7 @@ class NodeMessagingClient(override val config: NodeConfiguration,
             val platformVersion = message.required(platformVersionProperty) { getIntProperty(it) }
             // Use the magic deduplication property built into Artemis as our message identity too
             val uuid = message.required(HDR_DUPLICATE_DETECTION_ID) { UUID.fromString(message.getStringProperty(it)) }
-            log.trace { "Received message from: ${message.address} user: $user topic: $topic sessionID: $sessionID uuid: $uuid" }
+            log.info ( "Received message from: ${message.address} user: $user topic: $topic sessionID: $sessionID uuid: $uuid" )
 
             return ArtemisReceivedMessage(TopicSession(topic, sessionID), X500Name(user), platformVersion, uuid, message)
         } catch (e: Exception) {
@@ -403,6 +409,7 @@ class NodeMessagingClient(override val config: NodeConfiguration,
                 // Ignore it: this can happen if the server has gone away before we do.
             }
             p2pConsumer = null
+           //bridgeManager!!.stop()
             prevRunning
         }
         if (running && !nodeExecutor.isOnThread) {
@@ -444,10 +451,10 @@ class NodeMessagingClient(override val config: NodeConfiguration,
                         putLongProperty(HDR_SCHEDULED_DELIVERY_TIME, System.currentTimeMillis() + amqDelayMillis)
                     }
                 }
-                log.trace {
+                log.info(
                     "Send to: $mqAddress topic: ${message.topicSession.topic} " +
                             "sessionID: ${message.topicSession.sessionID} uuid: ${message.uniqueMessageId}"
-                }
+                )
                 producer!!.send(mqAddress, artemisMessage)
 
                 retryId?.let {

@@ -40,6 +40,7 @@ class SimpleNode(val config: NodeConfiguration, val address: NetworkHostAndPort 
     val keyService: KeyManagementService = E2ETestKeyManagementService(identityService, setOf(identity))
     val executor = ServiceAffinityExecutor(config.myLegalName.commonName, 1)
     // TODO: We should have a dummy service hub rather than change behaviour in tests
+    val networkMapCache = InMemoryNetworkMapCache(serviceHub = null)
     val broker = ArtemisMessagingServer(config, address.port, rpcAddress.port, InMemoryNetworkMapCache(serviceHub = null), userService)
     val networkMapRegistrationFuture = openFuture<Unit>()
     val network = database.transaction {
@@ -51,7 +52,8 @@ class SimpleNode(val config: NodeConfiguration, val address: NetworkHostAndPort 
                 executor,
                 database,
                 networkMapRegistrationFuture,
-                monitoringService)
+                monitoringService,
+                networkMapCache)
     }
 
     fun start() {
