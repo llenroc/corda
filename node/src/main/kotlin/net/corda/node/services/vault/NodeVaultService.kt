@@ -453,5 +453,11 @@ class NodeVaultService(private val services: ServiceHub) : SingletonSerializeAsT
     }
 
     @VisibleForTesting
-    internal fun isRelevant(state: ContractState) = state !is OwnableState || services.keyManagementService.filterMyKeys(listOf(state.owner.owningKey)).any()
+    internal fun isRelevant(state: ContractState) :Boolean{
+        val keysToCheck = when (state) {
+            is OwnableState -> listOf(state.owner.owningKey)
+            else -> state.participants.map { it.owningKey }
+        }
+        return services.keyManagementService.filterMyKeys(keysToCheck).any()
+    }
 }

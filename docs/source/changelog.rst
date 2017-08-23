@@ -64,9 +64,8 @@ UNRELEASED
 * Moved ``:finance`` gradle project files into a ``net.corda.finance`` package namespace.
   This may require adjusting imports of Cash flow references and also of ``StartFlow`` permission in ``gradle.build`` files.
 
-* Removed the concept of relevancy from ``LinearState``. The ``ContractState``'s relevancy to the vault can be determent
-  by the flow context, the vault will process all transaction from the flow which is not received during transaction
-  dependency resolution process.
+* Removed the concept of relevancy from ``LinearState``. The ``ContractState``'s relevancy to the vault can be determined
+  by the flow context, the vault will process any transaction from a flow which is not derived from transaction resolution verification.
 
 Milestone 14
 ------------
