@@ -34,19 +34,14 @@ import java.util.*
 @JvmOverloads
 fun ServiceHub.fillWithSomeTestDeals(dealIds: List<String>,
                                      participants: List<AbstractParty> = emptyList(),
-                                     notary: Party = DUMMY_NOTARY,
-                                     relevantToMe: Boolean = true): Vault<DealState> {
+                                     notary: Party = DUMMY_NOTARY) : Vault<DealState> {
     val myKey: PublicKey = myInfo.legalIdentity.owningKey
     val me = AnonymousParty(myKey)
 
     val transactions: List<SignedTransaction> = dealIds.map {
         // Issue a deal state
         val dummyIssue = TransactionBuilder(notary = notary).apply {
-            if (!relevantToMe) {
-                addOutputState(DummyDealContract.State(ref = it, participants = participants))
-            }else{
-                addOutputState(DummyDealContract.State(ref = it, participants = participants.plus(me)))
-            }
+            addOutputState(DummyDealContract.State(ref = it, participants = participants.plus(me)))
             addCommand(dummyCommand())
         }
         val stx = signInitialTransaction(dummyIssue)

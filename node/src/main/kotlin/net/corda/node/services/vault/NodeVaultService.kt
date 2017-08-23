@@ -76,8 +76,7 @@ class NodeVaultService(private val services: ServiceHub) : SingletonSerializeAsT
                         contractStateClassName = stateAndRef.value.state.data.javaClass.name,
                         contractState = stateAndRef.value.state.serialize(context = STORAGE_CONTEXT).bytes,
                         stateStatus = Vault.StateStatus.UNCONSUMED,
-                        recordedTime = services.clock.instant(),
-                        isRelevant = isRelevant(stateAndRef.value.state.data))
+                        recordedTime = services.clock.instant())
                 state.stateRef = PersistentStateRef(stateAndRef.key)
                 session.save(state)
             }
@@ -143,7 +142,6 @@ class NodeVaultService(private val services: ServiceHub) : SingletonSerializeAsT
     }
 
     private fun notifyRegular(txns: Iterable<WireTransaction>) {
-        val ourKeys = services.keyManagementService.keys
         fun makeUpdate(tx: WireTransaction): Vault.Update<ContractState> {
             val ourNewStates = tx.outputs.
                     filter { isRelevant(it.data) }.
@@ -455,8 +453,5 @@ class NodeVaultService(private val services: ServiceHub) : SingletonSerializeAsT
     }
 
     @VisibleForTesting
-    internal fun isRelevant(state: ContractState) = when (state) {
-        is OwnableState -> services.keyManagementService.filterMyKeys(listOf(state.owner.owningKey)).any()
-        else -> true
-    }
+    internal fun isRelevant(state: ContractState) = state !is OwnableState || services.keyManagementService.filterMyKeys(listOf(state.owner.owningKey)).any()
 }

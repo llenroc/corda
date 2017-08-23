@@ -64,9 +64,9 @@ UNRELEASED
 * Moved ``:finance`` gradle project files into a ``net.corda.finance`` package namespace.
   This may require adjusting imports of Cash flow references and also of ``StartFlow`` permission in ``gradle.build`` files.
 
-* Allow storing and querying irrelevant states from the vault.
-  * Added a optional flag ``storeIrrelevantStates`` to node properties to configure vault irrelevant state retention policy.
-  * Added ``Relevancy`` to vault query criteria to allow filtering using the newly added state attribute.
+* Removed the concept of relevancy from ``LinearState``. The ``ContractState``'s relevancy to the vault can be determent
+  by the flow context, the vault will process all transaction from the flow which is not received during transaction
+  dependency resolution process.
 
 Milestone 14
 ------------
